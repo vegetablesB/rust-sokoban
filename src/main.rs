@@ -1,11 +1,11 @@
 use std::path;
 
-use ggez::{conf, Context, event, GameResult};
+use ggez::{conf, Context, GameResult};
+use ggez::event::{self};
 use ggez::glam::Vec2;
 use ggez::graphics::{self, DrawParam, Image};
-use specs::{
-    Builder, Component, join::Join, ReadStorage, RunNow, System, VecStorage, World, WorldExt,
-};
+use ggez::input::keyboard::{KeyCode, KeyInput};
+use specs::{Builder, Component, join::Join, ReadStorage, RunNow, System, VecStorage, World, WorldExt, Write, WriteStorage};
 
 const TILE_WIDTH: f32 = 32.0;
 
@@ -79,6 +79,46 @@ impl<'a> System<'a> for RenderingSystem<'a> {
     }
 }
 
+pub struct InputSystem {}
+
+impl<'a> System<'a> for InputSystem {
+    type SystemData = (
+        Write<'a, InputQueue>,
+        WriteStorage<'a, Position>,
+        ReadStorage<'a, Player>,
+    );
+
+
+    fn run(&mut self, data: Self::SystemData) {
+        let (mut input_queue, mut positions, players) = data;
+
+        for (position, _player) in (&mut positions, &players).join() {
+            if let Some(input) = input_queue.keys.pop() {
+                match input.keycode {
+                    Some(KeyCode::Up) => {
+                        position.y = position.y - 1;
+                    }
+                    Some(KeyCode::Down) => {
+                        position.y = position.y + 1;
+                    }
+                    Some(KeyCode::Left) => {
+                        position.x = position.x - 1;
+                    }
+                    Some(KeyCode::Right) => {
+                        position.x = position.x + 1;
+                    }
+                    _ => (),
+                }
+            }
+        }
+    }
+}
+
+// Resources
+#[derive(Default)]
+pub struct InputQueue {
+    pub keys: Vec<KeyInput>,
+}
 
 // Struct to hold all the game state
 struct Game {
@@ -88,6 +128,11 @@ struct Game {
 // Main event loop
 impl event::EventHandler<ggez::GameError> for Game {
     fn update(&mut self, _ctx: &mut Context) -> GameResult {
+        {
+            let mut is = InputSystem {};
+            is.run_now(&self.world);
+        }
+
         Ok(())
     }
 
@@ -99,8 +144,23 @@ impl event::EventHandler<ggez::GameError> for Game {
 
         Ok(())
     }
+    fn key_down_event(
+        &mut self,
+        _ctx: &mut Context,
+        input: KeyInput,
+        _repeated: bool,
+    ) -> GameResult {
+        println!("Key pressed: {:?}", input.keycode);
+        let mut input_queue = self.world.write_resource::<InputQueue>();
+        input_queue.keys.push(input);
+        Ok(())
+    }
 }
 
+// Register resources with the world
+pub fn register_resources(world: &mut World) {
+    world.insert(InputQueue::default());
+}
 
 // Register components with the world
 pub fn register_components(world: &mut World) {
@@ -230,6 +290,7 @@ pub fn load_map(world: &mut World, map_string: String) {
 pub fn main() -> GameResult {
     let mut world = World::new();
     register_components(&mut world);
+    register_resources(&mut world);
     initialize_level(&mut world);
 
     // Create a game context and event loop
