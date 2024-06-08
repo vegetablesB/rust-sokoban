@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 ggez = "0.9.3"
 specs = { version = "0.20.0", features = ["specs-derive"] }
+itertools = "0.13.0"
