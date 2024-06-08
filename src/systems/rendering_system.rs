@@ -52,6 +52,8 @@ impl<'a> System<'a> for RenderingSystem<'a> {
             120.0,
             44.0,
         );
+        let fps = format!("FPS: {:.0}", self.context.time.fps());
+        self.draw_text(&mut canvas, fps, 525.0, 160.0, 44.0);
 
         // Finally, present the context, this will actually display everything
         // on the screen.
