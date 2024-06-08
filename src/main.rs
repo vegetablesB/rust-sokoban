@@ -1,13 +1,16 @@
 use std::collections::HashMap;
 use std::path;
 
-use ggez::{conf, Context, GameResult};
 use ggez::event::{self};
 use ggez::glam::Vec2;
 use ggez::graphics::{self, DrawParam, Image};
 use ggez::input::keyboard::{KeyCode, KeyInput};
-use specs::{Builder, Component, Entities, join::Join, NullStorage, ReadStorage, RunNow, System, VecStorage, World, WorldExt, Write, WriteStorage};
+use ggez::{conf, Context, GameResult};
 use specs::world::Index;
+use specs::{
+    join::Join, Builder, Component, Entities, NullStorage, ReadStorage, RunNow, System, VecStorage,
+    World, WorldExt, Write, WriteStorage,
+};
 
 const TILE_WIDTH: f32 = 32.0;
 const MAP_WIDTH: u8 = 8;
@@ -63,8 +66,8 @@ impl<'a> System<'a> for RenderingSystem<'a> {
         let (positions, renderables) = data;
 
         // Clearing the screen (this gives us the background colour)
-        let mut canvas = graphics::Canvas::from_frame(self.context, graphics::Color::new(0.95, 0.95, 0.95, 1.0));
-
+        let mut canvas =
+            graphics::Canvas::from_frame(self.context, graphics::Color::new(0.95, 0.95, 0.95, 1.0));
 
         // Get all the renderables with their positions and sort by the position z
         // This will allow us to have entities layered visually.
@@ -76,7 +79,8 @@ impl<'a> System<'a> for RenderingSystem<'a> {
         for (position, renderable) in rendering_data.iter() {
             // Load the image
             // let image = Image::new(self.context, renderable.path.clone()).expect("expected image");
-            let image = Image::from_path(self.context, renderable.path.clone()).expect("expected image");
+            let image =
+                Image::from_path(self.context, renderable.path.clone()).expect("expected image");
             let x = position.x as f32 * TILE_WIDTH;
             let y = position.y as f32 * TILE_WIDTH;
 
@@ -100,9 +104,8 @@ impl<'a> System<'a> for InputSystem {
         WriteStorage<'a, Position>,
         ReadStorage<'a, Player>,
         ReadStorage<'a, Movable>,
-        ReadStorage<'a, Immovable>
+        ReadStorage<'a, Immovable>,
     );
-
 
     fn run(&mut self, data: Self::SystemData) {
         let (mut input_queue, entities, mut positions, players, movables, immovables) = data;
@@ -146,12 +149,10 @@ impl<'a> System<'a> for InputSystem {
                     // Check if there is a movable object
                     match mov.get(&pos) {
                         Some(id) => to_move.push((input.keycode, id.clone())),
-                        None => {
-                            match imm.get(&pos) {
-                                Some(_) => to_move.clear(),
-                                None => break,
-                            }
-                        }
+                        None => match imm.get(&pos) {
+                            Some(_) => to_move.clear(),
+                            None => break,
+                        },
                     }
                 }
             }
@@ -346,7 +347,6 @@ pub fn load_map(world: &mut World, map_string: String) {
         }
     }
 }
-
 
 pub fn main() -> GameResult {
     let mut world = World::new();
