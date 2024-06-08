@@ -1,18 +1,19 @@
 use std::collections::HashMap;
 
 use ggez::input::keyboard::KeyCode;
-use specs::world::Index;
 use specs::{Entities, Join, ReadStorage, System, Write, WriteStorage};
+use specs::world::Index;
 
 use crate::components::*;
 use crate::constants::*;
-use crate::resources::InputQueue;
+use crate::resources::{GamePlay, InputQueue};
 
 pub struct InputSystem {}
 
 impl<'a> System<'a> for InputSystem {
     type SystemData = (
         Write<'a, InputQueue>,
+        Write<'a, GamePlay>,
         Entities<'a>,
         WriteStorage<'a, Position>,
         ReadStorage<'a, Player>,
@@ -21,7 +22,8 @@ impl<'a> System<'a> for InputSystem {
     );
 
     fn run(&mut self, data: Self::SystemData) {
-        let (mut input_queue, entities, mut positions, players, movables, immovables) = data;
+        let (mut input_queue, mut gameplay, entities, mut positions, players, movables, immovables) =
+            data;
         let mut to_move = Vec::new();
         for (position, _player) in (&positions, &players).join() {
             if let Some(input) = input_queue.keys.pop() {
@@ -70,6 +72,11 @@ impl<'a> System<'a> for InputSystem {
                 }
             }
         }
+        // Now add the steps to the game play
+        if to_move.len() > 0 {
+            gameplay.moves_count += 1;
+        }
+
         for (key, id) in to_move {
             if let Some(position) = positions.get_mut(entities.entity(id)) {
                 match key {

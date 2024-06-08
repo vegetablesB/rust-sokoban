@@ -30,6 +30,12 @@ impl event::EventHandler<ggez::GameError> for Game {
             is.run_now(&self.world);
         }
 
+        // Run gameplay state system
+        {
+            let mut gss = GameplayStateSystem {};
+            gss.run_now(&self.world);
+        }
+
         Ok(())
     }
 
@@ -62,8 +68,8 @@ pub fn initialize_level(world: &mut World) {
     W . . . B . . W
     W . . . . . . W
     W . P . . . . W
-    W . . . . . . W
-    W . . S . . . W
+    W . . B . . . W
+    W . . S S . . W
     W . . . . . . W
     W W W W W W W W
     ";
